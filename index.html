@@ -2236,6 +2236,7 @@
         <button class="action-btn secondary" id="btnMeld" disabled>Meld Cards</button>
         <button class="action-btn secondary" id="btnAddToMeld" disabled>Add to Meld</button>
         <button class="action-btn primary" id="btnDiscard" disabled>Discard</button>
+        <button class="action-btn primary" id="btnGoOut" disabled style="background: var(--ku-crimson);">🏁 Go Out</button>
     </div>
     
     <div class="message-overlay" id="messageOverlay"></div>
@@ -2725,6 +2726,12 @@ function startNewGame() {
     if (dialog) dialog.remove();
     
     deleteSave();
+    
+    // Reset scores and round for new game
+    gameState.playerScore = 0;
+    gameState.opponentScore = 0;
+    gameState.round = 1;
+    
     initGame();
     showAIComment(getAIComment('greetings'), 3000);
 }
@@ -3259,8 +3266,10 @@ function createMeldDisplay(cards, rank) {
 function drawFromDeck() {
     if (gameState.currentTurn !== 'player' || gameState.hasDrawn) return;
     if (gameState.deck.length < 2) {
-        showMessage("Deck is empty!");
+        showMessage("Deck is empty! Round ends.");
         playSound('error');
+        // When deck runs out, round ends - no one gets going out bonus
+        endRoundDeckEmpty();
         return;
     }
     
@@ -3283,13 +3292,20 @@ function drawFromDiscard() {
     
     const topCard = gameState.discardPile[gameState.discardPile.length - 1];
     
+    // Cannot pick up a pile topped with a wild card (pile is "frozen")
+    if (topCard.rank === '2' || topCard.rank === 'JOKER') {
+        showMessage("Can't pick up a pile topped with a wild card!");
+        playSound('error');
+        return;
+    }
+    
     // Check if can use top card (must be able to meld it)
     const hand = gameState.inFoot ? gameState.playerFoot : gameState.playerHand;
-    const canUse = hand.filter(c => c.rank === topCard.rank).length >= 2 || 
-                   gameState.playerMelds[topCard.rank];
+    const matchingInHand = hand.filter(c => c.rank === topCard.rank).length;
+    const hasMeld = gameState.playerMelds[topCard.rank];
     
-    if (!canUse && topCard.rank !== '2' && topCard.rank !== 'JOKER') {
-        showMessage("You need 2 matching cards to pick up the discard pile!");
+    if (!hasMeld && matchingInHand < 2) {
+        showMessage("You need 2 matching cards or an existing meld to pick up the pile!");
         playSound('error');
         return;
     }
@@ -3339,6 +3355,21 @@ function meldCards() {
         return;
     }
     
+    // If adding to existing meld, check combined wild ratio
+    if (gameState.playerMelds[meldRank]) {
+        const existingMeld = gameState.playerMelds[meldRank];
+        const existingWilds = existingMeld.filter(c => c.rank === '2' || c.rank === 'JOKER').length;
+        const existingNaturals = existingMeld.filter(c => c.rank !== '2' && c.rank !== 'JOKER').length;
+        const totalWilds = existingWilds + wildCards.length;
+        const totalNaturals = existingNaturals + naturalCards.length;
+        
+        if (totalWilds > totalNaturals) {
+            showMessage("Adding these cards would give too many wilds in the meld!");
+            playSound('error');
+            return;
+        }
+    }
+    
     // Create or add to meld
     if (!gameState.playerMelds[meldRank]) {
         gameState.playerMelds[meldRank] = [];
@@ -3369,6 +3400,11 @@ function meldCards() {
     checkForFoot();
     renderAll();
     updateButtons();
+    
+    // Check if player can go out now
+    if (canGoOutNow()) {
+        showMessage("🎉 You can GO OUT! Click the Go Out button!", 3000);
+    }
 }
 
 function addToMeld() {
@@ -3376,20 +3412,25 @@ function addToMeld() {
     
     let lastAddedRank = null;
     
-    // Find compatible meld
+    // Find compatible meld for each card
     for (let card of gameState.selectedCards) {
         const isWild = card.rank === '2' || card.rank === 'JOKER';
+        let cardAdded = false;
         
         for (let rank in gameState.playerMelds) {
+            if (cardAdded) break; // Don't add same card to multiple melds
+            
             if (isWild || card.rank === rank) {
                 const meld = gameState.playerMelds[rank];
                 const wilds = meld.filter(c => c.rank === '2' || c.rank === 'JOKER').length;
                 const naturals = meld.filter(c => c.rank !== '2' && c.rank !== 'JOKER').length;
                 
+                // Can't add wild if it would make wilds >= naturals
                 if (isWild && wilds >= naturals) continue;
                 
                 meld.push(card);
                 lastAddedRank = rank;
+                cardAdded = true;
                 const hand = gameState.inFoot ? gameState.playerFoot : gameState.playerHand;
                 const idx = hand.findIndex(c => c.id === card.id);
                 if (idx >= 0) hand.splice(idx, 1);
@@ -3411,6 +3452,11 @@ function addToMeld() {
     checkForFoot();
     renderAll();
     updateButtons();
+    
+    // Check if player can go out now
+    if (canGoOutNow()) {
+        showMessage("🎉 You can GO OUT! Click the Go Out button!", 3000);
+    }
 }
 
 function discard() {
@@ -3440,10 +3486,20 @@ function discard() {
     // Re-evaluate hand after potential foot transition
     const currentHand = gameState.inFoot ? gameState.playerFoot : gameState.playerHand;
     
-    // Can only go out if in foot AND foot is empty AND have at least one meld
-    if (currentHand.length === 0 && gameState.inFoot && Object.keys(gameState.playerMelds).length > 0) {
-        endRound('player');
-        return;
+    // Check if player went out (in foot, empty hand, has canasta)
+    if (currentHand.length === 0 && gameState.inFoot) {
+        // Must have at least one canasta to go out
+        let hasCanasta = false;
+        for (let rank in gameState.playerMelds) {
+            if (gameState.playerMelds[rank].length >= 7) {
+                hasCanasta = true;
+                break;
+            }
+        }
+        if (hasCanasta) {
+            endRound('player');
+            return;
+        }
     }
     
     gameState.currentTurn = 'opponent';
@@ -3498,6 +3554,11 @@ function opponentTurn() {
     if (!drewFromDiscard && gameState.deck.length >= 2) {
         hand.push(gameState.deck.pop());
         hand.push(gameState.deck.pop());
+    } else if (!drewFromDiscard && gameState.deck.length < 2) {
+        // Deck is empty - round ends
+        showMessage("Deck is empty! Round ends.");
+        endRoundDeckEmpty();
+        return;
     }
     
     renderDeck();
@@ -3596,12 +3657,17 @@ function opponentTurn() {
                 });
             }
             
-            // Check if AI just completed a canasta
+            // Check if AI just completed a canasta (check for exactly 7 to avoid repeat announcements)
             for (let rank in gameState.opponentMelds) {
-                if (gameState.opponentMelds[rank].length === 7) {
-                    playSound('canasta');
-                    showAIComment(getAIComment('onAICanasta'), 2500);
-                    break;
+                if (gameState.opponentMelds[rank].length >= 7) {
+                    // Only announce if this is a new canasta (length is exactly 7)
+                    // or we just added cards to reach 7+
+                    const meld = gameState.opponentMelds[rank];
+                    if (meld.length === 7) {
+                        playSound('canasta');
+                        showAIComment(getAIComment('onAICanasta'), 2500);
+                        break;
+                    }
                 }
             }
         }
@@ -3683,9 +3749,16 @@ function opponentTurn() {
                 }
             }
             
-            // Check for going out
+            // Check for going out (AI needs canasta too)
             const finalHand = gameState.opponentInFoot ? gameState.opponentFoot : gameState.opponentHand;
-            if (finalHand.length === 0 && gameState.opponentInFoot) {
+            let aiHasCanasta = false;
+            for (let rank in gameState.opponentMelds) {
+                if (gameState.opponentMelds[rank].length >= 7) {
+                    aiHasCanasta = true;
+                    break;
+                }
+            }
+            if (finalHand.length === 0 && gameState.opponentInFoot && aiHasCanasta) {
                 endRound('opponent');
                 return;
             }
@@ -3699,6 +3772,51 @@ function opponentTurn() {
         
         renderAll();
     }, 600);
+}
+
+// End round when deck runs out (no going out bonus)
+function endRoundDeckEmpty() {
+    // Calculate scores
+    let playerPoints = calculateMeldPoints(gameState.playerMelds);
+    let opponentPoints = calculateMeldPoints(gameState.opponentMelds);
+    
+    // Subtract remaining cards from both players
+    const playerRemaining = [...gameState.playerHand, ...gameState.playerFoot];
+    const opponentRemaining = [...gameState.opponentHand, ...gameState.opponentFoot];
+    
+    playerRemaining.forEach(c => playerPoints -= POINT_VALUES[c.rank] || 5);
+    opponentRemaining.forEach(c => opponentPoints -= POINT_VALUES[c.rank] || 5);
+    
+    // No going out bonus when deck runs out
+    
+    gameState.playerScore += playerPoints;
+    gameState.opponentScore += opponentPoints;
+    
+    playSound('lose');
+    
+    showMessage(`Round Over! Deck exhausted.\n\nYou: ${playerPoints > 0 ? '+' : ''}${playerPoints} pts\n${AI_NAME}: ${opponentPoints > 0 ? '+' : ''}${opponentPoints} pts`, 3000);
+    showRoundAnalysis(playerPoints, opponentPoints);
+    
+    setTimeout(() => {
+        gameState.round++;
+        gameState.roundMoves = [];
+        if (gameState.round <= 4) {
+            showAIComment(getAIComment('onClose'), 2500);
+            initGame();
+        } else {
+            const playerWon = gameState.playerScore > gameState.opponentScore;
+            const finalWinner = playerWon ? 'You win!' : `${AI_NAME} wins!`;
+            if (playerWon) {
+                playSound('win');
+                showAIComment(AI_PERSONALITY.onGameEnd.lose[Math.floor(Math.random() * AI_PERSONALITY.onGameEnd.lose.length)], 4000);
+            } else {
+                playSound('lose');
+                showAIComment(AI_PERSONALITY.onGameEnd.win[Math.floor(Math.random() * AI_PERSONALITY.onGameEnd.win.length)], 4000);
+            }
+            showMessage(`Game Over!\n\nFinal Score:\nYou: ${gameState.playerScore}\n${AI_NAME}: ${gameState.opponentScore}\n\n${finalWinner}`, 0);
+            deleteSave();
+        }
+    }, 3000);
 }
 
 function endRound(winner) {
@@ -3796,16 +3914,78 @@ function updateTurnIndicator() {
     }
 }
 
+// Check if player can go out
+function canGoOut() {
+    // Must be in foot
+    if (!gameState.inFoot) return false;
+    
+    // Foot must be empty (or will be empty after discard)
+    if (gameState.playerFoot.length > 1) return false;
+    
+    // Must have at least one canasta (7+ cards in a meld)
+    let hasCanasta = false;
+    for (let rank in gameState.playerMelds) {
+        if (gameState.playerMelds[rank].length >= 7) {
+            hasCanasta = true;
+            break;
+        }
+    }
+    
+    return hasCanasta;
+}
+
+// Check if player can go out without discarding (no cards left)
+function canGoOutNow() {
+    return gameState.inFoot && 
+           gameState.playerFoot.length === 0 && 
+           canGoOut();
+}
+
+// Go out and end the round
+function goOut() {
+    if (!canGoOut()) {
+        showMessage("You need at least one canasta to go out!");
+        playSound('error');
+        return;
+    }
+    
+    // If player still has a card, they must discard it first
+    if (gameState.playerFoot.length === 1) {
+        // Auto-discard the last card
+        const lastCard = gameState.playerFoot[0];
+        gameState.playerFoot = [];
+        gameState.discardPile.push(lastCard);
+        playSound('cardPlace');
+    }
+    
+    playSound('win');
+    showMessage("🎉 You went out! 🎉", 2000);
+    endRound('player');
+}
+
 function updateButtons() {
     const btnMeld = document.getElementById('btnMeld');
     const btnAdd = document.getElementById('btnAddToMeld');
     const btnDiscard = document.getElementById('btnDiscard');
+    const btnGoOut = document.getElementById('btnGoOut');
     
     const isPlayPhase = gameState.phase === 'play' && gameState.currentTurn === 'player';
+    const currentHand = gameState.inFoot ? gameState.playerFoot : gameState.playerHand;
     
     btnMeld.disabled = !isPlayPhase || gameState.selectedCards.length < 3;
     btnAdd.disabled = !isPlayPhase || gameState.selectedCards.length === 0 || Object.keys(gameState.playerMelds).length === 0;
     btnDiscard.disabled = !isPlayPhase || gameState.selectedCards.length !== 1;
+    
+    // Go Out button - enabled when in foot with 0-1 cards and has a canasta
+    const canGoOutState = isPlayPhase && canGoOut() && currentHand.length <= 1;
+    btnGoOut.disabled = !canGoOutState;
+    
+    // If player has no cards and can go out, highlight the button
+    if (canGoOutState && currentHand.length === 0) {
+        btnGoOut.style.animation = 'tutorialPulse 1.5s infinite';
+    } else {
+        btnGoOut.style.animation = 'none';
+    }
 }
 
 function updateScores() {
@@ -3842,6 +4022,7 @@ document.getElementById('messageOverlay').addEventListener('click', () => {
 document.getElementById('btnMeld').addEventListener('click', meldCards);
 document.getElementById('btnAddToMeld').addEventListener('click', addToMeld);
 document.getElementById('btnDiscard').addEventListener('click', discard);
+document.getElementById('btnGoOut').addEventListener('click', goOut);
 
 // Initialize non-game features (these don't depend on game state)
 initTutor();
