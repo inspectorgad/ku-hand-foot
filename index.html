@@ -1271,88 +1271,152 @@
                 font-size: 9px !important;
             }
             
-            /* Mobile Melds Section */
+            /* Mobile Melds Section - Tab-Based Design */
             .mobile-melds-section {
                 display: block;
-                padding: 6px 8px;
-                background: rgba(0,0,0,0.25);
-                border-radius: 8px;
-                max-height: 100px;
-                overflow-y: auto;
+                background: rgba(0,0,0,0.4);
+                border-radius: 12px;
+                overflow: hidden;
+                margin: 8px 0;
             }
             
-            .mobile-melds-header {
+            .melds-tab-buttons {
                 display: flex;
-                justify-content: space-between;
-                margin-bottom: 4px;
-                font-size: 8px;
-                color: var(--ku-yellow);
+                background: #1a1a2e;
+            }
+            
+            .melds-tab-btn {
+                flex: 1;
+                padding: 10px 8px;
+                border: none;
                 font-family: 'Oswald', sans-serif;
-                text-transform: uppercase;
-            }
-            
-            .mobile-melds-grid {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 4px;
-            }
-            
-            .mobile-meld {
-                display: flex;
-                align-items: center;
-                gap: 3px;
-                background: rgba(0,0,0,0.3);
-                padding: 3px 5px;
-                border-radius: 4px;
-            }
-            
-            .mobile-meld.opponent {
-                background: rgba(232,0,13,0.2);
-            }
-            
-            .mobile-meld-rank {
-                font-family: 'Oswald', sans-serif;
-                font-size: 11px;
-                font-weight: bold;
-                color: white;
-                min-width: 16px;
-            }
-            
-            .mobile-meld-cards {
-                display: flex;
-            }
-            
-            .mobile-meld-card {
-                width: 14px;
-                height: 20px;
-                background: white;
-                border-radius: 2px;
-                margin-left: -8px;
-                font-size: 7px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-weight: bold;
+                gap: 6px;
+                transition: all 0.2s;
             }
             
-            .mobile-meld-card:first-child { margin-left: 0; }
-            
-            .mobile-meld-card.canasta {
-                border: 1px solid var(--ku-yellow);
-                box-shadow: 0 0 3px var(--ku-yellow);
+            .melds-tab-btn.your-tab {
+                background: #333;
+                color: #888;
+                border-bottom: 3px solid transparent;
             }
             
-            .mobile-meld-card.red { color: var(--ku-crimson); }
-            .mobile-meld-card.black { color: #1a1a1a; }
+            .melds-tab-btn.your-tab.active {
+                background: var(--ku-blue);
+                color: var(--ku-yellow);
+                border-bottom: 3px solid var(--ku-yellow);
+            }
             
-            .mobile-meld-count {
-                font-size: 8px;
-                color: rgba(255,255,255,0.7);
+            .melds-tab-btn.jay-tab {
+                background: #333;
+                color: #888;
+                border-bottom: 3px solid transparent;
+            }
+            
+            .melds-tab-btn.jay-tab.active {
+                background: #8B0000;
+                color: #ff6b6b;
+                border-bottom: 3px solid #ff6b6b;
+            }
+            
+            .melds-tab-btn .tab-badge {
+                background: rgba(255,255,255,0.2);
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 12px;
+            }
+            
+            .melds-tab-btn.your-tab.active .tab-badge {
+                background: var(--ku-yellow);
+                color: var(--ku-blue);
+            }
+            
+            .melds-tab-btn.jay-tab.active .tab-badge {
+                background: #ff6b6b;
+                color: #5a0000;
+            }
+            
+            .melds-tab-content {
+                padding: 10px;
+                min-height: 80px;
+                max-height: 140px;
+                overflow-y: auto;
+            }
+            
+            .melds-grid-tabbed {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .meld-card-tabbed {
+                background: white;
+                border-radius: 10px;
+                padding: 10px;
+                text-align: center;
+            }
+            
+            .meld-card-tabbed .meld-rank {
+                font-size: 20px;
+                font-weight: 700;
+                color: #333;
+            }
+            
+            .meld-card-tabbed .meld-suits {
+                font-size: 14px;
+                margin: 6px 0;
+                letter-spacing: 1px;
+            }
+            
+            .meld-card-tabbed .meld-suits .red { color: #e8000d; }
+            .meld-card-tabbed .meld-suits .black { color: #000; }
+            
+            .meld-card-tabbed .meld-progress {
+                background: #eee;
+                border-radius: 8px;
+                height: 6px;
+                overflow: hidden;
+                margin-top: 6px;
+            }
+            
+            .meld-card-tabbed .meld-progress-bar {
+                height: 100%;
+                background: linear-gradient(90deg, var(--ku-blue), #00a0ff);
+                transition: width 0.3s;
+            }
+            
+            .meld-card-tabbed .meld-count {
+                font-size: 11px;
+                color: #666;
+                margin-top: 4px;
                 font-family: 'Oswald', sans-serif;
             }
             
-            .mobile-meld-count.complete {
-                color: var(--ku-yellow);
+            .meld-card-tabbed.canasta {
+                background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                border: 2px solid #006400;
+            }
+            
+            .meld-card-tabbed.canasta .meld-progress-bar {
+                background: #006400;
+            }
+            
+            .meld-card-tabbed.canasta .meld-count {
+                color: #006400;
+                font-weight: 700;
+            }
+            
+            .no-melds-message {
+                color: rgba(255,255,255,0.5);
+                text-align: center;
+                padding: 20px;
+                font-size: 13px;
+                font-family: 'Oswald', sans-serif;
             }
             
             /* Player Hand - Two Rows with Wrap */
@@ -4064,6 +4128,14 @@ function isMobile() {
     return window.innerWidth <= 480;
 }
 
+// Track which tab is active (player or opponent)
+let activeMeldsTab = 'player';
+
+function switchMeldsTab(tab) {
+    activeMeldsTab = tab;
+    renderMobileMelds();
+}
+
 function renderMobileMelds() {
     if (!isMobile()) return;
     
@@ -4079,73 +4151,119 @@ function renderMobileMelds() {
         }
     }
     
+    const playerMeldCount = Object.keys(gameState.playerMelds).length;
+    const opponentMeldCount = Object.keys(gameState.opponentMelds).length;
+    
     let html = `
-        <div class="mobile-melds-header">
-            <span>YOUR MELDS</span>
-            <span>OPPONENT MELDS</span>
+        <div class="melds-tab-buttons">
+            <button class="melds-tab-btn your-tab ${activeMeldsTab === 'player' ? 'active' : ''}" onclick="switchMeldsTab('player')">
+                👤 Your Melds
+                <span class="tab-badge">${playerMeldCount}</span>
+            </button>
+            <button class="melds-tab-btn jay-tab ${activeMeldsTab === 'opponent' ? 'active' : ''}" onclick="switchMeldsTab('opponent')">
+                🐦 Jay's Melds
+                <span class="tab-badge">${opponentMeldCount}</span>
+            </button>
         </div>
-        <div class="mobile-melds-grid">
+        <div class="melds-tab-content">
+            <div class="melds-grid-tabbed">
     `;
     
-    // Player melds
-    for (let rank in gameState.playerMelds) {
-        const meld = gameState.playerMelds[rank];
-        const isCanasta = meld.length >= 7;
-        const hasWild = meld.some(c => c.rank === '2' || c.rank === 'JOKER');
-        
-        html += `<div class="mobile-meld">`;
-        html += `<span class="mobile-meld-rank">${rank}s</span>`;
-        html += `<div class="mobile-meld-cards">`;
-        
-        // Sort: naturals on top
-        const sortedMeld = [...meld].sort((a, b) => {
-            const aIsWild = a.rank === '2' || a.rank === 'JOKER';
-            const bIsWild = b.rank === '2' || b.rank === 'JOKER';
-            if (aIsWild && !bIsWild) return -1;
-            if (!aIsWild && bIsWild) return 1;
-            return 0;
-        });
-        
-        sortedMeld.slice(0, 5).forEach(card => {
-            const colorClass = SUIT_COLORS[card.suit] === 'red' ? 'red' : 'black';
-            const canasta = isCanasta ? 'canasta' : '';
-            html += `<div class="mobile-meld-card ${canasta} ${colorClass}">${card.rank === 'JOKER' ? '★' : card.rank}</div>`;
-        });
-        
-        if (meld.length > 5) {
-            html += `<div class="mobile-meld-card" style="background:#666;color:white;">+${meld.length - 5}</div>`;
+    if (activeMeldsTab === 'player') {
+        // Render player melds
+        if (playerMeldCount === 0) {
+            html += `<div class="no-melds-message" style="grid-column: span 2;">No melds yet. Create your first meld!</div>`;
+        } else {
+            for (let rank in gameState.playerMelds) {
+                const meld = gameState.playerMelds[rank];
+                const isCanasta = meld.length >= 7;
+                const hasWild = meld.some(c => c.rank === '2' || c.rank === 'JOKER');
+                const progressPercent = Math.min(100, (meld.length / 7) * 100);
+                
+                // Build suits display
+                let suitsHtml = '';
+                const sortedMeld = [...meld].sort((a, b) => {
+                    const aIsWild = a.rank === '2' || a.rank === 'JOKER';
+                    const bIsWild = b.rank === '2' || b.rank === 'JOKER';
+                    if (aIsWild && !bIsWild) return 1;
+                    if (!aIsWild && bIsWild) return -1;
+                    return 0;
+                });
+                
+                sortedMeld.slice(0, 7).forEach(card => {
+                    const colorClass = SUIT_COLORS[card.suit] === 'red' ? 'red' : 'black';
+                    if (card.rank === 'JOKER') {
+                        suitsHtml += `<span class="${colorClass}">★</span>`;
+                    } else if (card.rank === '2') {
+                        suitsHtml += `<span class="${colorClass}">2</span>`;
+                    } else {
+                        suitsHtml += `<span class="${colorClass}">${card.suit}</span>`;
+                    }
+                });
+                
+                html += `
+                    <div class="meld-card-tabbed ${isCanasta ? 'canasta' : ''}">
+                        <div class="meld-rank">${rank}s</div>
+                        <div class="meld-suits">${suitsHtml}</div>
+                        <div class="meld-progress">
+                            <div class="meld-progress-bar" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="meld-count">${isCanasta ? '🏆 CANASTA!' : meld.length + ' of 7'}</div>
+                    </div>
+                `;
+            }
         }
-        
-        html += `</div>`;
-        html += `<span class="mobile-meld-count ${isCanasta ? 'complete' : ''}">${isCanasta ? '✓' : meld.length + '/7'}</span>`;
-        html += `</div>`;
+    } else {
+        // Render opponent melds
+        if (opponentMeldCount === 0) {
+            html += `<div class="no-melds-message" style="grid-column: span 2;">Jay has no melds yet.</div>`;
+        } else {
+            for (let rank in gameState.opponentMelds) {
+                const meld = gameState.opponentMelds[rank];
+                const isCanasta = meld.length >= 7;
+                const hasWild = meld.some(c => c.rank === '2' || c.rank === 'JOKER');
+                const progressPercent = Math.min(100, (meld.length / 7) * 100);
+                
+                // Build suits display
+                let suitsHtml = '';
+                const sortedMeld = [...meld].sort((a, b) => {
+                    const aIsWild = a.rank === '2' || a.rank === 'JOKER';
+                    const bIsWild = b.rank === '2' || b.rank === 'JOKER';
+                    if (aIsWild && !bIsWild) return 1;
+                    if (!aIsWild && bIsWild) return -1;
+                    return 0;
+                });
+                
+                sortedMeld.slice(0, 7).forEach(card => {
+                    const colorClass = SUIT_COLORS[card.suit] === 'red' ? 'red' : 'black';
+                    if (card.rank === 'JOKER') {
+                        suitsHtml += `<span class="${colorClass}">★</span>`;
+                    } else if (card.rank === '2') {
+                        suitsHtml += `<span class="${colorClass}">2</span>`;
+                    } else {
+                        suitsHtml += `<span class="${colorClass}">${card.suit}</span>`;
+                    }
+                });
+                
+                html += `
+                    <div class="meld-card-tabbed ${isCanasta ? 'canasta' : ''}">
+                        <div class="meld-rank">${rank}s</div>
+                        <div class="meld-suits">${suitsHtml}</div>
+                        <div class="meld-progress">
+                            <div class="meld-progress-bar" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="meld-count">${isCanasta ? '🏆 CANASTA!' : meld.length + ' of 7'}</div>
+                    </div>
+                `;
+            }
+        }
     }
     
-    // Opponent melds
-    for (let rank in gameState.opponentMelds) {
-        const meld = gameState.opponentMelds[rank];
-        const isCanasta = meld.length >= 7;
-        
-        html += `<div class="mobile-meld opponent">`;
-        html += `<span class="mobile-meld-rank">${rank}s</span>`;
-        html += `<div class="mobile-meld-cards">`;
-        
-        meld.slice(0, 4).forEach(card => {
-            const colorClass = SUIT_COLORS[card.suit] === 'red' ? 'red' : 'black';
-            const canasta = isCanasta ? 'canasta' : '';
-            html += `<div class="mobile-meld-card ${canasta} ${colorClass}">${card.rank === 'JOKER' ? '★' : card.rank}</div>`;
-        });
-        
-        if (meld.length > 4) {
-            html += `<div class="mobile-meld-card" style="background:#666;color:white;">+${meld.length - 4}</div>`;
-        }
-        
-        html += `</div>`;
-        html += `<span class="mobile-meld-count ${isCanasta ? 'complete' : ''}">${isCanasta ? '✓' : meld.length + '/7'}</span>`;
-        html += `</div>`;
-    }
+    html += `
+            </div>
+        </div>
+    `;
     
-    html += `</div>`;
     mobileMeldsSection.innerHTML = html;
     mobileMeldsSection.style.display = 'block';
 }
